@@ -16,6 +16,43 @@ from app.schemas.ai import AIAdvice, AnalysisContext
 logger = logging.getLogger(__name__)
 
 
+def _attach_evidence_sources(validated_output: dict, prepared_context: dict) -> dict:
+    """Populate source traces from verified RAG evidence when the model omitted them."""
+    sources = validated_output.get("sources") or []
+    if sources:
+        return validated_output
+
+    evidence_items = prepared_context.get("evidence") or []
+    if not evidence_items:
+        return validated_output
+
+    attached_sources = []
+    for item in evidence_items[:5]:
+        if not isinstance(item, dict):
+            continue
+
+        document_id = item.get("document_id")
+        title = item.get("title") or item.get("source_name") or "retrieved evidence"
+        page_number = item.get("page_number")
+        text = item.get("text") or title
+        claim = str(text).strip() or title
+        if page_number is not None:
+            claim = f"{claim} (page {page_number})"
+
+        reference = document_id if document_id is not None else title
+        attached_sources.append(
+            {
+                "claim": claim[:500],
+                "source_type": "document",
+                "reference_id": str(reference),
+            }
+        )
+
+    if attached_sources:
+        validated_output["sources"] = attached_sources
+    return validated_output
+
+
 def _fallback_ai_advice(language: str = "en") -> AIAdvice:
     normalized_language = language if language in {"en", "hi", "mr"} else "en"
     return AIAdvice(
@@ -77,7 +114,10 @@ def generate_advice(analysis_context: AnalysisContext, language: str = "en") -> 
         # 4. Validate structure + run hallucination guardrails against prepared_context.
         validated_output = guardrails.validate(raw_output, prepared_context)
 
-        # 5. Attach the deterministic recommendation explanation.
+        # 5. Preserve the verified RAG/document evidence in the output when the model omitted it.
+        validated_output = _attach_evidence_sources(validated_output, prepared_context)
+
+        # 6. Attach the deterministic recommendation explanation.
         validated_output["recommendation"] = recommendation.explain(
             prepared_context.get("feasibility", {})
         )
