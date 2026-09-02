@@ -46,6 +46,7 @@ def build(analysis_context: dict) -> dict:
     competition = _as_dict(context.get("competition"))
     schemes = context.get("schemes", []) or []
     feasibility = _as_dict(context.get("feasibility"))
+    evidence = context.get("evidence", []) or []
     risks = context.get("risks", []) or []
     language = context.get("language") or "en"
 
@@ -76,6 +77,21 @@ def build(analysis_context: dict) -> dict:
                 "match_status": scheme_obj.get("match_status"),
                 "match_score": scheme_obj.get("match_score"),
                 "verification_required": scheme_obj.get("verification_required", True),
+            }
+        )
+
+    evidence_summary = []
+    for item in evidence:
+        evidence_obj = _as_dict(item)
+        evidence_summary.append(
+            {
+                "document_id": evidence_obj.get("document_id"),
+                "title": evidence_obj.get("title"),
+                "page_number": evidence_obj.get("page_number"),
+                "section_title": evidence_obj.get("section_title"),
+                "source_name": evidence_obj.get("source_name"),
+                "score": evidence_obj.get("score"),
+                "text": evidence_obj.get("text"),
             }
         )
 
@@ -118,6 +134,7 @@ def build(analysis_context: dict) -> dict:
             "nearest_competitor_distance_km": competition.get("nearest_competitor_distance_km"),
         },
         "schemes": scheme_summary,
+        "evidence": evidence_summary,
         "feasibility": {
             "overall_score": feasibility.get("overall_score"),
             "market_score": feasibility.get("market_score"),

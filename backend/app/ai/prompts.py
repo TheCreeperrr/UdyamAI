@@ -40,6 +40,12 @@ Use the backend data to explain:
 3. what the user should do next
 4. which scheme(s) are relevant and why
 
+Important evidence rule:
+- If the context includes a verified `evidence` list, use those document/page/source details as the source trace for scheme or factual statements.
+- Never fabricate document IDs, page numbers, titles, or page references.
+- If a scheme claim is based on a retrieved evidence item, preserve the document_id and page_number in the `sources` array.
+- If evidence is absent or not relevant, say so explicitly and do not invent it.
+
 Context:
 {pretty_context}
 """.strip()
