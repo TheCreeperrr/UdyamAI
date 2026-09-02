@@ -28,28 +28,34 @@ def _contains_invented_financial_claim(text: str, context: dict[str, Any]) -> bo
         return False
 
     lower_text = text.lower()
-    if "subsidy" in lower_text and re.search(r"\b\d+\s*%\b", lower_text):
+    percent_pattern = re.compile(r"(?<!\w)\d+(?:,\d{3})*(?:\.\d+)?\s*%")
+    currency_pattern = re.compile(
+        r"(?:₹|rs\.?|rupees?)\s*\d+(?:,\d{3})*(?:\.\d+)?|\b\d+(?:,\d{3})*(?:\.\d+)?\s*(?:lakhs?|crores?|cr|lakh|crore)\b",
+        re.IGNORECASE,
+    )
+    number_pattern = re.compile(r"(?<!\w)\d+(?:,\d{3})*(?:\.\d+)?(?!\w)")
+
+    if any(keyword in lower_text for keyword in ["subsidy", "loan", "interest", "emi", "price"]):
+        if percent_pattern.search(lower_text) or currency_pattern.search(lower_text):
+            return True
+
+    if any(keyword in lower_text for keyword in ["project cost", "capital requirement", "monthly emi", "cost", "price"]):
+        if number_pattern.search(lower_text) and "backend" not in lower_text and "verified" not in lower_text:
+            return True
+
+    if any(keyword in lower_text for keyword in ["guaranteed", "definitely", "assured", "certainly"]):
         return True
-    if "loan" in lower_text and re.search(r"\b\d+\s*%\b", lower_text):
+
+    if ("approved" in lower_text or "approval" in lower_text) and "not" not in lower_text:
+        if "requires verification" not in lower_text and "potentially" not in lower_text:
+            return True
+
+    if "market price" in lower_text and currency_pattern.search(lower_text):
         return True
-    if "interest" in lower_text and re.search(r"\b\d+\s*%\b", lower_text):
+
+    if "per unit" in lower_text and number_pattern.search(lower_text):
         return True
-    if "project cost" in lower_text and re.search(r"\b\d+[\d,]*\b", lower_text):
-        return True
-    if (
-        "cost" in lower_text
-        and re.search(r"\b\d+[\d,]*\b", lower_text)
-        and "backend" not in lower_text
-    ):
-        return True
-    if "guaranteed" in lower_text or "definitely" in lower_text:
-        return True
-    if (
-        "approved" in lower_text
-        and "not" not in lower_text
-        and "requires verification" not in lower_text
-    ):
-        return True
+
     return False
 
 
