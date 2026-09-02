@@ -96,6 +96,20 @@ class FeasibilityContext(FeasibilityAnalysisResponse):
     model_config = {"from_attributes": True}
 
 
+class RetrievedEvidenceContext(BaseModel):
+    """Optional evidence bundle supplied by the RAG layer for scheme claims."""
+
+    document_id: UUID | str | None = None
+    title: str | None = None
+    page_number: int | None = None
+    section_title: str | None = None
+    source_name: str | None = None
+    source_url: str | None = None
+    language: str | None = None
+    score: float | None = None
+    text: str | None = None
+
+
 class AnalysisContext(BaseModel):
     location: LocationContext
     business: BusinessContext
@@ -104,6 +118,7 @@ class AnalysisContext(BaseModel):
     competition: CompetitionContext
     schemes: list[SchemeMatchContext] = Field(default_factory=list)
     feasibility: FeasibilityContext
+    evidence: list[RetrievedEvidenceContext] = Field(default_factory=list)
     language: str = "en"
 
 
